@@ -1,5 +1,6 @@
 # Welcome to OverlordModding
-[![Overlord Modding Logo]](./OLM_Logo.png)
+
+![Overlord Modding Logo](OLM_Logo.png)
 
 
 # Basic File Formats
