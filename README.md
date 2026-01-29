@@ -1,5 +1,5 @@
 # Welcome to OverlordModding
-[![OLM Logo]][./OLM_Logo.png]
+[![Overlord Modding Logo]](./OLM_Logo.png)
 
 
 # Basic File Formats
@@ -61,8 +61,8 @@ Under Construction.
 
 ## TZF
 
-TZF files are ZLIB deflate compressed files with the uncompressed filesize as the first 4 bytes, a 2 byte header, the compressed file, two magic words in little endian of uint32 0xDEADBEEF uint32 0xFEEDDEAF, a 4 byte inverted CRC32 hash of this file before the magic bytes, and a 4 byte termination sequence of 02 00 00 00
-Since this file type is for compression, the only modifications you can do is compressing or decompressing, both of which the tool inside this repository can do.
+TZF files are a file type for compression, the only modifications you can do is compressing or decompressing, both of which the tool provided inside this repository can do for you.
+For the technicals of the format, please refer to the [included docs](./technical_specs/TZF.md).
 
 ## OSG
 
