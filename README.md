@@ -20,9 +20,16 @@
  - [MP3](#MP3)
  - [DDS](#DDS)
  - [DAT](#DAT)
+ - [XML](#XML)
 
 
 # How to modify each file type
+
+## XML
+
+Extensible Markup Language File
+
+While most good text editors like notepad++ can edit these directly, the developers specifically use microsoft excel 2003 spreadsheet xmls. you will either need excel, or libre office to create similar xmls.
 
 ## DAT
 
@@ -39,34 +46,46 @@ Audacity can export mp3's as long as you have the LAME encoder for it, and many 
 ## 8LD
 
 Language file of some sort
-Under Construction.
 
 ## OMP
 
 Overlord Map Package
-Under Construction.
 
 ## CLB
 
 Content Library
-Under Construction.
+Aow3 ContentEd
 
 ## BIK
 
 Bink Video Format
-Under Construction.
 
-## PRP
+Proprietary video and audio format known for better compression rates at the time.
 
-Protected Resource Package
-Under Construction.
-For the technicals of the format, please refer to the [included docs](./technical_specs/PRP.md)
+I will not be reverse engineering this, sorry.
 
 ## RPK
 
 Resource Package
-Under Construction.
+contains everything but the kitchen sink
+ - categories and entries (contains lists of stuff 0/6 1/24 2/15 etc)
+ - xmls
+ - animations (ANIM)
+ - effects (fx)
+ - objects (OBJ)
+ - meshes
+ - materials (MAT)
+ - texture (TEX - dds format)
+ - LISTL (language?)
+ - SFX (eventl?)
+
 For the technicals of the format, please refer to the [included docs](./technical_specs/RPK.md)
+
+## PRP
+
+Protected Resource Package
+
+For the technicals of the format, please refer to the [included docs](./technical_specs/PRP.md)
 
 ## DTA
 
@@ -75,11 +94,13 @@ Under Construction.
 ## MAP
 
 Texture Set Mapping File
+
 Under Construction.
 
 ## TZF
 
 Trusted ZLIB File
+
 TZF files are a file type for compression, the only modifications you can do is compressing or decompressing, both of which the tool provided inside this repository can do for you.
 For the technicals of the format, please refer to the [included docs](./technical_specs/TZF.md).
 
@@ -93,5 +114,8 @@ Overlord Save Info
 
 ## PSP
 
+Protected System Package
+
 ## SPF
 
+System Package File

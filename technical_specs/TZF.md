@@ -5,6 +5,7 @@
  
 example:
 F7 48 00 00
+
 indicates a filesize of 48F7h, or 18679 bytes
 
 ----
@@ -15,6 +16,7 @@ indicates a filesize of 48F7h, or 18679 bytes
  
 example:
 78 5E
+
 this lets the game engine or other programs know what file format is being used
 
 ----
@@ -39,6 +41,7 @@ For later steps, you will need to calculate the CRC32 of the file with the Start
  
 example:
 EF BE AD DE AF DE ED FE
+
 it is always FEEDDEAF and DEADBEEF
 
 ----
@@ -50,6 +53,7 @@ it is always FEEDDEAF and DEADBEEF
  
 example: 
 8A 85 17 27
+
 CRC32 value of D8E87A75 gets bitwise NOT'd (2717858A), then formatted to little endian for the final byte values
 
 ----
@@ -61,6 +65,7 @@ CRC32 value of D8E87A75 gets bitwise NOT'd (2717858A), then formatted to little 
  
 example:
 02 00 00 00
+
 is always these bytes. can also be written as a uint32 with a value of 2 in little endian
 
 ----
