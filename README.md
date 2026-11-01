@@ -86,7 +86,7 @@ For the technicals of the format, please refer to the [included docs](./technica
 
 Protected Resource Package
 
-For the technicals of the format, please refer to the [included docs](./technical_specs/PRP.md)
+For the technicals of the format, please refer to the [included docs](./technical_specs/RPK.md)
 
 ## DTA
 
@@ -102,7 +102,7 @@ Under Construction.
 
 Trusted ZLIB File
 
-TZF files are a file type for compression, the only modifications you can do is compressing or decompressing, both of which the tool provided inside this repository can do for you.
+TZF files are a file type for compression, the only modifications you can do is compressing or decompressing, both of which the planned tool for this repository will do for you.
 For the technicals of the format, please refer to the [included docs](./technical_specs/TZF.md).
 
 ## OSG
