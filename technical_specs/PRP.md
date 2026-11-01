@@ -1,0 +1,3 @@
+-16 0x8 bytes, 0xFEEDDEAF 0xDEADBEEF little endian
+-8 inverted CRC32 hash little endian
+-4 OC 01 00 00 terminator
