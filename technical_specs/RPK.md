@@ -6,7 +6,7 @@ example:
 
 52 50 4B 00
 
-Is always the same RPK\0 
+Is always the same "RPK\0"
 
 ----
 
@@ -35,8 +35,8 @@ example:
 
 5F 00 00 00 in Character Succubus.prp
 
-this ID might be a global reference (not verified) ID so any files that require the character succubus will use this id to refer to it. (possibly)
-this ID can also be 00 00 00 00 to default/reference the first object encountered. replacing 00 00 00 00 with the ID of the first object is functionally equivalent from my very limited testing
+this ID can also be 00 00 00 00 to default/reference the first object encountered. replacing 00 00 00 00 with the ID of the first object is functionally equivalent and verified in-game
+this ID might be a global reference ID so any files that require the character succubus will use this id to refer to it. (needs verified)
 
 # IMPORTANT
 
@@ -46,7 +46,7 @@ it remains to be seen if this is also true for Overlord or not
 
 ----
 
-# Filesize Excluding Header and Integrity Check
+# RPK Body Size
  - 0x4 bytes
  - little endian
 
@@ -54,67 +54,124 @@ example:
 
 D8 13 59 00
 
-the total rpk file would be 591488, and B0 of that would be header. 591488-B0 = 5913D8
+the total rpk file would be 591488, and B0 of that would be header. 591488-B0 = 5913D8. add an extra 0x10 of trailer if container format.
 
 ----
 
 # Internal File Name
- - ASCII string
+ - variable length ASCII string, null terminated
  - can have whitespace
- - can be surprisingly large
+ - can be surprisingly large, usually matches filename but can be different (reference aow3 system.rpk calling itself "NONAME.RPK" internally)
  
 example:
 
 Character Red Cloak
 
-note: this string is immediately followed by null padding. it is unknown if some of these terminate this specific string or not
+note: this string is immediately followed by null padding. it is unknown if the null actually terminates the string, or if it just reads all bytes until 0xB0 and discards all null bytes. needs manually checked
 
 ----
 
 # Null Padding
- - is literally just 00
- - always fills up to B0
+ - is literally just 0x00 repeating
+ - always fills up to B0 which is the end of the header
 
 example:
 
-im not giving an example. if you want one, open any prp file in a hex editor
+im not giving an example. if you want one, open any prp or rpk file in a hex editor
 
 ----
 
-# Object Index Identifier
-0x1 byte internal engine structure type  //example 0x81. 
-//each one is structured slightly differently with different data and i dont have access to the engine itself or debugging data to list all the types or figure out structures.
-0x4 bytes size - amount of entries that are 8 bytes long
-0x2 bytes repeated - unknown numbers of some sort counting upwards, possibly id's or something. once a 00 00 is encountered, the previous 2 bytes is the start of the 8 byte entries
-0x8 bytes of unknown data, repeating (entries\*) amount as dictated earlier
-dependency ID and load order?
-{4 bytes entry number? (always ascending), 4 bytes entry offset? (always ascending) }
-
-//indeterminate data
-
-0x4 identifier
-0x4 string char count
-0x?? ascii string determined by previous bytes
-
-
-
-
-----
-
-# RPK Ending Sequence
-
-the actual RPK format just ends after listing some strings. there is no terminator, no integrity check, nothing. it just ends. anything that comes after this is part of the container file formats like prp, psp, etc.
+# Frame Descriptor
+ - 0x1 byte
+ - highest bit determines if the current frame structure contains a record array
+ - 0x80 | n, where n = number of id/offset pairs that follow
+ - below 0x80 = leaf frame: still n pairs, but no record array
 
 example:
-MAPEDITOR.CLB....SYSTEM_CORE_ENTITIES.RPK....GLOBAL_SCRIPTS.RPK(file ends abruptly)
+
+83    //0x80|3 = three pairs follow - system.psp offset 0xB0
 
 ----
 
-# IF ITS A CONTAINER FORMAT THESE WILL BE INCLUDED
+# Record Count
+ - 0x4 bytes
+ - u32 integer
+ - multiply by 8 bytes to calculate full size of record array
+
+example:
+
+2E 00 00 00    //46 records total. 2Eh\*8h=170h
+
+----
+
+# ID and Offset Pairs    //the mapping
+ - n x 2 bytes
+ - byte 1 = field id, byte 2 = relative and cumulative end offset inside the current frame blob
+ - first id always ends at 0 offset. unsure what this means for the first id yet.
+
+example:
+
+13 00    //id 0x13 ends at 0 -> zero-length slot
+16 04    //id 0x16 ends at 4 -> id 16 owns bytes 0..4
+17 0E    //id 0x17 ends at 0x0E -> id 17 owns bytes 4..0x0E
+
+note: each id means something specific to the engine, 16 seems to consistently be the uid and 17 is consistently the strlen and ascii string as two examples. there will be a table with ids and best guess as to what they mean at the bottom of this file.
+also note: im unsure if this meaning is always constant or if it changes depending on environment / earlier file data and the consistency is mere coincidence. it could just be load order for predefined engine functions. really no way to know without heavy testing.
+
+----
+
+# Record Array
+ - size is earlier count x 8 bytes
+ - 0x4 bytes u32 id followed by 0x4 bytes u32 absolute file offset, repeating
+ - these ids continue the ascending run started by the pairs
+ - these offsets are absolute file offsets, but they do NOT point at frame starts, and they also seem to be in ascending order
+
+example:
+
+18 00 00 00 4E A3 26 00    //id 0x18 -> file offset 0x26A34E - system.psp 0xBB
+5B 00 00 00 47 12 59 00    //id 0x5B -> 0x591247, last of 46 - system.psp 0x223
+
+----
+
+# Variable Data
+ - entirely determined by the previous ids and offsets, and what the id's represent
+ - if id's are not always constant, then determined by an engine loading function. more data needed to be definitive
+
+note: i have seen what i assume is padding between frames of 0x01 0x01 0x00 0x00 0x01 0x01 0x00 0x00 infinitely repeating. this is usually used for alignment purposes from what i can tell. if you come across bytes like "01 00 00" outside frames with no other explanation and in seemingly random byte amounts, it might be alignment padding.
+
+----
+
+# Following Frames
+ - all frames should follow the same basic structure
+ - frames should continue until the end of the RPK body  //educated guess. either this or unless something else defines the structure like an engine loading function. need more/better info before looking into this
+
+example:
+
+82 
+01 00 00 00 
+14 00 15 06 
+1E 00 00 00 0B A1 26 00 
+02 00 00 00 31 35
+
+//0x82 (2 pairs), 1 record, {0x1E -> 0x26A10B}, 6 byte blob "15" - system.psp 0x239
+    
+----
+
+# RPK Body Ending Sequence
+- there is no terminator, no integrity check, nothing. it just ends. anything that comes after this is part of a container file format like prp, psp, etc.
+
+example:
+MAPEDITOR.CLB....SYSTEM_CORE_ENTITIES.RPK....GLOBAL_SCRIPTS.RPK(file ends abruptly, no termination sequence)
+
+
+note: it ends exactly where the header says so. RPK Body Size + B0 (Header Size) = total file length
+
+----
+
+# IF ITS A CONTAINER FORMAT THESE TRAILINGS WILL BE INCLUDED
 
 # Integrity Check Marker Bytes
- - 0x16 bytes
- - little endian
+ - 0x8 bytes
  - stupid
  - constant
  
@@ -125,16 +182,14 @@ it is always FEEDDEAF and DEADBEEF
 
 ----
 
-
 # Integrity Checksum Hash
  - 0x4 bytes
- - little endian
  - bitwise NOT of CRC32
  
 example: 
 8A 85 17 27
 
-CRC32 value of the file (with header) D8E87A75 gets bitwise NOT'd (2717858A), then formatted to little endian for the final byte values
+CRC32 value of the rpk file (including header, excluding container format trailings) D8E87A75 gets bitwise NOT'd (2717858A). this is confirmed and verified
 
 ----
 
@@ -146,122 +201,28 @@ CRC32 value of the file (with header) D8E87A75 gets bitwise NOT'd (2717858A), th
 example:
 02 00 00 00
 
-can also be written as a uint32 with a value of 2 in little endian
+i havent seen any values other than 2. if you see any others let me know so i can look at it
 
 ----
 
 # Additional Notes
 
-If you manage to find a file with different values than what i have listed as contant, please notify me
+best guesses at what the id's in the id/offset pair means:
 
+| 0x12 | empty | 1 file only |
+| 0x13 | empty | the usual first slot |
+| 0x14 | u32 | small ints; empty in about 45% of appearances |
+| 0x15 | len + ASCII | numeric id or tagged path |
+| 0x16 | u32 | uid, = header uid |
+| 0x17 | len + ASCII | name |
+| 0x18-0x1A | unknown | |
+| 0x1B | u32 | only 0x00000101 seen |
+| 0x1C | u32 or path string | ambiguous |
+| 0x1D | byte | payload only |
+| 0x1E | 1 byte / 4 bytes | differs by frame kind |
+| 0x1F-0x22 | unknown | |
+| 0x23, 0x24 | unknown | one file each |
+| 0x25-0x28 | record slots only | never seen in a pair list |
+| 0x3C-0x5B | record slots only | system.psp only |
 
-
-
-B0 bytes = header
-0x4 bytes RPK\0 = magic bytes
-0x4 bytes ! possible internal filename size
-06 00 46 00 = prp
-07 00 46 00 = psp
-0x4 bytes UID?
-0x4 bytes total on disk filesize
-internal filename
-00 padding buffer
-B1 = raw datastream
-
-
-
-
-//------------------------------------------------
-//--- 010 Editor v14.0.1 Binary Template
-//
-//      File: RPK
-//   Authors: OLM
-//   Version: 0.01
-//   Purpose: figuring this shit out
-//  Category: 
-// File Mask: RPK
-//  ID Bytes: 52 50 4B 00
-//   History: 
-//------------------------------------------------
-LittleEndian();
-
-typedef uint32 RPK_UID <format=hex>;         // Object unique identifier
-typedef uint32 RPK_EntryNumber <format=hex>; // Local to current array/index, are reused in subsequent arrays/indexes
-typedef uint32 StringLength <format=hex>;    // Generic string length size
-
-
-typedef struct RPK_Header {
-    local int headersize=176;
-    char magic[4] <bgcolor=cBlack>;
-    uint16 filetype_id;
-    uint16 engine_id;
-    RPK_UID root_uid <bgcolor=cRed>;
-    uint32 data_size <format=hex>;
-    char filename[] <bgcolor=cBlue>;
-    local int paddingsize = headersize-sizeof(filename)-16;
-    char padding[paddingsize];
-} headerInfo <bgcolor=cLtBlue>;
-
-typedef struct RPK_IndexEntry {
-    uint32        offset <format=hex>;
-    RPK_EntryNumber entry_num;     // actually unsure if this is an offset, however im not sure what else it could be
-} RPK_IndexEntry;
-
-typedef struct RPK_IndexTable {
-    ubyte      arrayObjectType;
-    uint32     array_size <format=hex>;
-    uint16     required;
-    local int i;
-    local short bytevalue;
-    for( i=0; i<5; i++)
-    {
-       bytevalue = ReadUShort(FTell());
-       if (bytevalue != (bytevalue & 0x00FF)) // After 13 00 as soon as the low byte is 00 again, it is part of the array and not the vector
-       {
-           uint16 required2;
-       }
-       else
-       {
-           break;
-       }
-     }
-    RPK_IndexEntry indexentry[array_size];
-} IndexTable <bgcolor=cLtGreen>;
-
-typedef struct RPK_String {
-    StringLength length <bgcolor=cLtBlue>;
-    ubyte  data[length] <bgcolor=cBlue>;
-} RPK_String;
-
-typedef struct RPK_ObjectHeader {
-    RPK_UID    object_uid;
-    RPK_String object_string;
-} RPK_ObjectHeader;
-
-struct RPK {
-    RPK_Header header <bgcolor=cLtBlue>;
-    local int filesize;
-    filesize = (FileSize()-sizeof(header));
-    local int bytevalue;
-    local int position;
-    local int bytebuffer;
-    while (!FEof())
-    {
-        bytevalue = ReadByte();
-        if (bytevalue != (bytevalue | 0x80))
-        {
-            break;
-        }
-        position = (FTell()+1);
-        bytebuffer = ReadInt(position);
-        if (bytebuffer != bytebuffer & 0x0000FFFF) 
-        {
-            break;
-        }
-        RPK_IndexTable indexTable <bgcolor=cLtGreen>;
-        RPK_ObjectHeader indexObject <bgcolor=cRed>;
-    }
-    local int debugvar;
-    debugvar = FEof();
-    Printf("value is %d", debugvar);
-} RPK_file;
+big chance that these are very wrong, but having any kind of basis is still helpful until i learn more about the exact definitive structure

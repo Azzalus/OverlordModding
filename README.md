@@ -54,7 +54,6 @@ Overlord Map Package
 ## CLB
 
 Content Library
-Aow3 ContentEd
 
 ## BIK
 
@@ -67,7 +66,9 @@ I will not be reverse engineering this, sorry.
 ## RPK
 
 Resource Package
+
 contains everything but the kitchen sink
+
  - categories and entries (contains lists of stuff 0/6 1/24 2/15 etc)
  - xmls
  - animations (ANIM)
